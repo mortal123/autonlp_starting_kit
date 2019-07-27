@@ -1,0 +1,6 @@
+{
+    "class_num": 2,
+    "train_num": 6000,
+    "test_num": 4000,
+    "language": "ZH"
+}
