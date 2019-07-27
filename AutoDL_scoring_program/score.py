@@ -393,7 +393,7 @@ def plot_learning_curve(timestamps, scores,
 # TODO: change this function to avoid repeated computing
 def draw_learning_curve(solution_dir, prediction_files,
                         scoring_function, output_dir,
-                        basename, start, is_multiclass_task):
+                        basename, start, is_multiclass_task, time_budget):
   """Draw learning curve for one task."""
   solution = get_solution(solution_dir) # numpy array
   scores = []
@@ -448,7 +448,8 @@ def update_score_and_learning_curve(prediction_dir,
                                     solution_dir,
                                     scoring_function,
                                     score_dir,
-                                    is_multiclass_task):
+                                    is_multiclass_task,
+                                    time_budget):
   prediction_files = get_prediction_files(prediction_dir)
   alc = 0
   alc, time_used = draw_learning_curve(solution_dir=solution_dir,
@@ -457,7 +458,8 @@ def update_score_and_learning_curve(prediction_dir,
                             output_dir=score_dir,
                             basename=basename,
                             start=start,
-                            is_multiclass_task=is_multiclass_task)
+                            is_multiclass_task=is_multiclass_task,
+                            time_budget=time_budget)
   # Update learning curve page (detailed_results.html)
   write_scores_html(score_dir)
   # Write score
@@ -611,7 +613,6 @@ if __name__ == "__main__":
     default_solution_dir = join(root_dir, "AutoDL_sample_data")
     default_prediction_dir = join(root_dir, "AutoDL_sample_result_submission")
     default_score_dir = join(root_dir, "AutoDL_scoring_output")
-    default_time_budget = 1200
     # Parse directories from input arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('--solution_dir', type=str,
@@ -627,16 +628,12 @@ if __name__ == "__main__":
                         default=default_score_dir,
                         help="Directory storing the scoring output " +
                              "e.g. `scores.txt` and `detailed_results.html`.")
-    parser.add_argument('--time_budget', type=float,
-                        default=default_time_budget,
-                        help="Time budget for running ingestion program.")
     args = parser.parse_args()
     logger.debug("Parsed args are: " + str(args))
     logger.debug("-" * 50)
     solution_dir = args.solution_dir
     prediction_dir = args.prediction_dir
     score_dir = args.score_dir
-    time_budget = args.time_budget
 
     # Create the output directory, if it does not already exist and open output files
     if not os.path.isdir(score_dir):
@@ -673,12 +670,8 @@ if __name__ == "__main__":
     logger.debug("Scoring start time: {}".format(scoring_start))
     # Get ingestion PID
     ingestion_pid = ingestion_info['ingestion_pid']
-    # Update time_budget if exists
-    if 'time_budget' in ingestion_info:
-      if not time_budget == ingestion_info['time_budget']:
-        logger.warning("Different time budgets passed to ingestion and " +
-                       "scoring. Use that of ingestion.")
-        time_budget = ingestion_info['time_budget']
+    # get time_budget from start.txt
+    time_budget = ingestion_info['time_budget']
 
     # Get the metric
     scoring_function = autodl_auc
@@ -700,17 +693,12 @@ if __name__ == "__main__":
       prediction_files_so_far = []
       scores_so_far = []
       num_preds = 0
-      while(time.time() < ingestion_start + time_budget):
-        if not ingestion_is_alive(prediction_dir):
-          logger.info("Detected ingestion program had stopped running " +
-                      "because an 'end.txt' file is written by ingestion. " +
-                      "Stop scoring now.")
-          break
+      while (ingestion_is_alive(prediction_dir)):
         time.sleep(1)
         # Get list of prediction files
         prediction_files = get_prediction_files(prediction_dir)
         num_preds_new = len(prediction_files)
-        if(num_preds_new > num_preds):
+        if (num_preds_new > num_preds):
           new_prediction_files = get_new_prediction_files(prediction_dir,
                                                 prediction_files_so_far)
           new_scores = [scoring_function(solution, read_array(pred))
@@ -722,20 +710,22 @@ if __name__ == "__main__":
           scores_so_far += new_scores
           score = update_score_and_learning_curve(prediction_dir,
                                                   basename,
-                                                  ingestion_start,
+                                                  0,
                                                   solution_dir,
                                                   scoring_function,
                                                   score_dir,
-                                                  is_multiclass_task)
+                                                  is_multiclass_task,
+                                                  time_budget)
           num_preds = num_preds_new
           logger.info("Current area under learning curve for {}: {:.4f}"\
                     .format(basename, score))
-      else: # When time budget is used up, kill ingestion
-        if is_process_alive(ingestion_pid):
-          time_limit_exceeded = True
-          terminate_process(ingestion_pid)
-          logger.info("Detected time budget is used up. Killed ingestion and " +
-                      "terminating scoring...")
+
+      #  else: # When time budget is used up, kill ingestion
+      #  if is_process_alive(ingestion_pid):
+      #    time_limit_exceeded = True
+      #    terminate_process(ingestion_pid)
+      #    logger.info("Detected time budget is used up. Killed ingestion and " +
+      #                "terminating scoring...")
     except Exception as e:
       scoring_success = False
       logger.error("[-] Error occurred in scoring:\n" + str(e),
@@ -743,11 +733,12 @@ if __name__ == "__main__":
 
     score = update_score_and_learning_curve(prediction_dir,
                                             basename,
-                                            ingestion_start,
+                                            0,
                                             solution_dir,
                                             scoring_function,
                                             score_dir,
-                                            is_multiclass_task)
+                                            is_multiclass_task,
+                                            time_budget)
     logger.info("Final area under learning curve for {}: {:.4f}"\
               .format(basename, score))
 
@@ -755,10 +746,10 @@ if __name__ == "__main__":
     write_scores_html(score_dir, auto_refresh=False)
 
     # Use 'end.txt' file to detect if ingestion program ends
-    end_filepath =  os.path.join(prediction_dir, 'end.txt')
+    end_filepath = os.path.join(prediction_dir, 'end.txt')
     if not scoring_success:
       logger.error("[-] Some error occurred in scoring program. " +
-                  "Please see output/error log of Scoring Step.")
+                   "Please see output/error log of Scoring Step.")
     elif not os.path.isfile(end_filepath):
       if time_limit_exceeded:
         logger.error("[-] Ingestion program exceeded time budget. " +

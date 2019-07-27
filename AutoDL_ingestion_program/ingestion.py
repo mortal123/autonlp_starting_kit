@@ -92,17 +92,20 @@ Previous updates:
 verbosity_level = 'INFO'
 
 # Some common useful packages
+from contextlib import contextmanager
 from os import getcwd as pwd
 from os.path import join
 from sys import argv, path
 import argparse
-import datetime
+from datetime import datetime
 import glob
 import logging
 import numpy as np
 import os
 import sys
 import time
+import math
+import signal
 
 def get_logger(verbosity_level, use_error_log=False):
   """Set logging format to something like:
@@ -126,6 +129,48 @@ def get_logger(verbosity_level, use_error_log=False):
   return logger
 
 logger = get_logger(verbosity_level)
+
+
+def mprint(msg):
+  """info"""
+  cur_time = datetime.now().strftime('%m-%d %H:%M:%S')
+  print("INFO  [{}] {}".format(cur_time, msg))
+
+
+class TimeoutException(Exception):
+  pass
+
+class Timer:
+  def __init__(self):
+    self.duration = 0
+    self.total = None
+    self.remain = None
+    self.exec = None
+
+  def set(self, time_budget):
+    self.total = time_budget
+    self.remain = time_budget
+    self.exec = 0
+
+  @contextmanager
+  def time_limit(self, pname):
+    def signal_handler(signum, frame):
+      raise TimeoutException("Timed out!")
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(self.remain)
+    start_time = time.time()
+
+    try:
+      yield
+    finally:
+      exec_time = time.time() - start_time
+      signal.alarm(0)
+      self.exec += exec_time
+      self.duration += exec_time
+      remain_time = math.ceil(self.total - self.exec)
+      self.remain = remain_time
+
+      mprint('{} success, time spent so far {} sec'.format(pname, self.exec))
 
 def _HERE(*args):
   """Helper function for getting the current directory of this script."""
@@ -190,7 +235,6 @@ if __name__=="__main__":
     default_ingestion_program_dir = join(root_dir, "AutoDL_ingestion_program")
     default_code_dir = join(root_dir, "AutoDL_sample_code_submission")
     default_score_dir = join(root_dir, "AutoDL_scoring_output")
-    default_time_budget = 1200
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_dir', type=str,
                         default=default_dataset_dir,
@@ -214,9 +258,6 @@ if __name__=="__main__":
                         default=default_score_dir,
                         help="Directory storing the scoring output " +
                              "e.g. `scores.txt` and `detailed_results.html`.")
-    parser.add_argument('--time_budget', type=float,
-                        default=default_time_budget,
-                        help="Time budget for running ingestion program.")
     args = parser.parse_args()
     logger.debug("Parsed args are: " + str(args))
     logger.debug("-" * 50)
@@ -225,7 +266,6 @@ if __name__=="__main__":
     ingestion_program_dir= args.ingestion_program_dir
     code_dir= args.code_dir
     score_dir = args.score_dir
-    time_budget = args.time_budget
     if dataset_dir.endswith('run/input') and\
        code_dir.endswith('run/program'):
       logger.debug("Since dataset_dir ends with 'run/input' and code_dir "
@@ -251,7 +291,7 @@ if __name__=="__main__":
     #IG: to allow submitting the starting kit as sample submission
     path.append(code_dir + '/AutoDL_sample_code_submission')
     import data_io
-    from dataset import AutoDLDataset # THE class of AutoDL datasets
+    from dataset import AutoNLPDataset # THE class of AutoNLP datasets
 
     data_io.mkdir(output_dir)
 
@@ -266,6 +306,10 @@ if __name__=="__main__":
                        "Please put only ONE dataset under dataset_dir.")
 
     basename = datanames[0]
+    D = AutoNLPDataset(os.path.join(dataset_dir, basename))
+    metadata = D.get_metadata()
+    time_budget = metadata.get("time_budget", 20 * 60)
+    logger.info("Time budget: {}".format(time_budget))
 
     write_start_file(output_dir, start_time=start, time_budget=time_budget,
                      task_name=basename.split('.')[0])
@@ -278,21 +322,25 @@ if __name__=="__main__":
 
     ##### Begin creating training set and test set #####
     logger.info("Reading training set and test set...")
-    D_train = AutoDLDataset(os.path.join(dataset_dir, basename, "train"))
-    D_test = AutoDLDataset(os.path.join(dataset_dir, basename, "test"))
+    D.read_dataset()
     ##### End creating training set and test set #####
 
     ## Get correct prediction shape
-    num_examples_test = D_test.get_metadata().size()
-    output_dim = D_test.get_metadata().get_output_size()
+    num_examples_test = D.get_test_num()
+    output_dim = D.get_class_num()
     correct_prediction_shape = (num_examples_test, output_dim)
 
     try:
       # ========= Creating a model
       from model import Model # in participants' model.py
+
+      timer = Timer()
+      timer.set(time_budget)
+
       ##### Begin creating model #####
       logger.info("Creating model...")
-      M = Model(D_train.get_metadata()) # The metadata of D_train and D_test only differ in sample_count
+      with timer.time_limit('Initialization'):
+        M = Model(metadata)
       ###### End creating model ######
 
       # Check if the model has methods `train` and `test`.
@@ -315,20 +363,24 @@ if __name__=="__main__":
       prediction_order_number = 0
 
       # Start the CORE PART: train/predict process
-      while(not (use_done_training_api and M.done_training)):
-        remaining_time_budget = start + time_budget - time.time()
+      while (not (use_done_training_api and M.done_training)):
+
         # Train the model
         logger.info("Begin training the model...")
-        M.train(D_train.get_dataset(),
-                remaining_time_budget=remaining_time_budget)
+        remaining_time_budget = timer.remain
+        with timer.time_limit('training'):
+            M.train(D.get_train(), remaining_time_budget=timer.remain)
         logger.info("Finished training the model.")
-        remaining_time_budget = start + time_budget - time.time()
+
         # Make predictions using the trained model
         logger.info("Begin testing the model by making predictions " +
                      "on test set...")
-        Y_pred = M.test(D_test.get_dataset(),
-                        remaining_time_budget=remaining_time_budget)
+        remaining_time_budget = timer.remain
+        with timer.time_limit('predicting'):
+          Y_pred = M.test(D.get_test(),
+                          remaining_time_budget=remaining_time_budget)
         logger.info("Finished making predictions.")
+
         if Y_pred is None: # Stop train/predict process if Y_pred is None
           logger.info("The method model.test returned `None`. " +
                       "Stop train/predict process.")
@@ -342,7 +394,7 @@ if __name__=="__main__":
             )
         # Write timestamp to 'start.txt'
         write_timestamp(output_dir, predict_idx=prediction_order_number,
-                        timestamp=time.time())
+                        timestamp=timer.exec)
         # Prediction files: adult.predict_0, adult.predict_1, ...
         filename_test = basename[:-5] + '.predict_' +\
           str(prediction_order_number)
@@ -351,10 +403,10 @@ if __name__=="__main__":
         prediction_order_number += 1
         logger.info("[+] {0:d} predictions made, time spent so far {1:.2f} sec"\
                      .format(prediction_order_number, time.time() - start))
-        remaining_time_budget = start + time_budget - time.time()
-        logger.info( "[+] Time left {0:.2f} sec".format(remaining_time_budget))
-        if remaining_time_budget<=0:
-          break
+        logger.info( "[+] Time left {0:.2f} sec".format(timer.remain))
+    except TimeoutException as e:
+      logger.info("[-] Ingestion program exceeded time budget. Predictions "
+                  "made so far will be used for evaluation.")
     except Exception as e:
       ingestion_success = False
       logger.info("Failed to run ingestion.")
@@ -365,7 +417,7 @@ if __name__=="__main__":
     overall_time_spent = end_time - start
 
     # Write overall_time_spent to a end.txt file
-    end_filename =  'end.txt'
+    end_filename = 'end.txt'
     with open(os.path.join(output_dir, end_filename), 'w') as f:
       f.write('ingestion_duration: ' + str(overall_time_spent) + '\n')
       f.write('ingestion_success: ' + str(int(ingestion_success)) + '\n')

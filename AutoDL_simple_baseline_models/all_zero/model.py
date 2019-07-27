@@ -97,21 +97,13 @@ class Model(object):
           should keep track of its execution time to avoid exceeding its time
           budget. If remaining_time_budget is None, no time budget is imposed.
     """
+    """ dataset = ([content], np) """
     logger.info("This basic sample code doesn't do any training, " +
               "but will show some information on the dataset:")
-    iterator = dataset.make_one_shot_iterator()
-    example, labels = iterator.get_next()
-    sample_count = 0
-    with tf.Session(config=tf.ConfigProto(log_device_placement=False)) as sess:
-      while True:
-        try:
-          sess.run(labels)
-          sample_count += 1
-        except tf.errors.OutOfRangeError:
-          break
-    logger.info("Number of training examples: {}".format(sample_count))
-    logger.info("Shape of example: {}".format(example.shape))
-    logger.info("Number of classes: {}".format(labels.shape[0]))
+    contents, labels = dataset
+    logger.info("Number of training examples: {}".format(len(contents)))
+    logger.info("Number of labels: {}".format(len(labels)))
+    logger.info("Number of classes: {}".format(self.metadata["class_num"]))
     self.done_training = True
 
   def test(self, dataset, remaining_time_budget=None):
@@ -127,19 +119,9 @@ class Model(object):
           set and `output_dim` is the number of labels to be predicted. The
           values should be binary or in the interval [0,1].
     """
-    sample_count = 0
-    iterator = dataset.make_one_shot_iterator()
-    next_element = iterator.get_next()
-    with tf.Session(config=tf.ConfigProto(log_device_placement=False)) as sess:
-      while True:
-        try:
-          sess.run(next_element)
-          sample_count += 1
-        except tf.errors.OutOfRangeError:
-          break
-    logger.info("Number of test examples: {}".format(sample_count))
-    output_dim = self.metadata.get_output_size()
-    predictions = np.zeros((sample_count, output_dim))
+    logger.info("Number of test examples: {}".format(len(dataset)))
+    output_dim = self.metadata["class_num"]
+    predictions = np.zeros((len(dataset), output_dim))
     return predictions
 
   ##############################################################################
