@@ -157,7 +157,7 @@ class Timer:
     def signal_handler(signum, frame):
       raise TimeoutException("Timed out!")
     signal.signal(signal.SIGALRM, signal_handler)
-    signal.alarm(self.remain)
+    signal.alarm(int(math.ceil(self.remain)))
     start_time = time.time()
 
     try:
@@ -167,8 +167,10 @@ class Timer:
       signal.alarm(0)
       self.exec += exec_time
       self.duration += exec_time
-      remain_time = math.ceil(self.total - self.exec)
-      self.remain = remain_time
+      self.remain = self.total - self.exec
+
+      if self.remain <= 0:
+        raise TimeoutException("Timed out!")
 
       mprint('{} success, time spent so far {} sec'.format(pname, self.exec))
 
@@ -235,6 +237,7 @@ if __name__=="__main__":
     default_ingestion_program_dir = join(root_dir, "AutoDL_ingestion_program")
     default_code_dir = join(root_dir, "AutoDL_sample_code_submission")
     default_score_dir = join(root_dir, "AutoDL_scoring_output")
+    default_time_budget = 1200
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_dir', type=str,
                         default=default_dataset_dir,
@@ -258,6 +261,9 @@ if __name__=="__main__":
                         default=default_score_dir,
                         help="Directory storing the scoring output " +
                              "e.g. `scores.txt` and `detailed_results.html`.")
+    parser.add_argument("--time_budget", type=float,
+                        default=default_time_budget,
+                        help="Time budget for running ingestion program.")
     args = parser.parse_args()
     logger.debug("Parsed args are: " + str(args))
     logger.debug("-" * 50)
@@ -266,6 +272,7 @@ if __name__=="__main__":
     ingestion_program_dir= args.ingestion_program_dir
     code_dir= args.code_dir
     score_dir = args.score_dir
+    time_budget = args.time_budget
     if dataset_dir.endswith('run/input') and\
        code_dir.endswith('run/program'):
       logger.debug("Since dataset_dir ends with 'run/input' and code_dir "
@@ -308,7 +315,7 @@ if __name__=="__main__":
     basename = datanames[0]
     D = AutoNLPDataset(os.path.join(dataset_dir, basename))
     metadata = D.get_metadata()
-    time_budget = metadata.get("time_budget", 20 * 60)
+    time_budget = metadata.get("time_budget", time_budget)
     logger.info("Time budget: {}".format(time_budget))
 
     write_start_file(output_dir, start_time=start, time_budget=time_budget,
@@ -332,17 +339,26 @@ if __name__=="__main__":
 
     try:
       # ========= Creating a model
-      from model import Model # in participants' model.py
-
       timer = Timer()
-      timer.set(time_budget)
+      timer.set(20 * 60) # 20 min for participants to initializing and install other packages
+      with timer.time_limit("Importing model"):
+        from model import Model # in participants' model.py
 
       ##### Begin creating model #####
       logger.info("Creating model...")
       with timer.time_limit('Initialization'):
         M = Model(metadata)
       ###### End creating model ######
+    except TimeoutException as e:
+      logger.info("[-] Initialization phase exceeded time budget. Stopped to run train/predict")
+    except Exception as e:
+      logger.info("Failed to initializing model.")
+      logger.error("Encountered exception:\n" + str(e), exc_info=True)
 
+
+    try:
+      timer = Timer()
+      timer.set(time_budget)
       # Check if the model has methods `train` and `test`.
       for attr in ['train', 'test']:
         if not hasattr(M, attr):
@@ -403,7 +419,7 @@ if __name__=="__main__":
         prediction_order_number += 1
         logger.info("[+] {0:d} predictions made, time spent so far {1:.2f} sec"\
                      .format(prediction_order_number, time.time() - start))
-        logger.info( "[+] Time left {0:.2f} sec".format(timer.remain))
+        logger.info("[+] Time left {0:.2f} sec".format(timer.remain))
     except TimeoutException as e:
       logger.info("[-] Ingestion program exceeded time budget. Predictions "
                   "made so far will be used for evaluation.")

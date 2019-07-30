@@ -8,12 +8,12 @@
 
 VERISION = "v20190505"
 DESCRIPTION = \
-    """This script allows participants to run local test of their method 
+    """This script allows participants to run local test of their method
     within the
 downloaded starting kit folder (and avoid using submission quota on CodaLab). To
 do this, run:
 ```
-python run_local_test.py -dataset_dir=./AutoDL_sample_data/miniciao 
+python run_local_test.py -dataset_dir=./AutoDL_sample_data/miniciao
 -code_dir=./AutoDL_sample_code_submission/
 ```
 in the starting kit directory. If you want to test the performance of a
@@ -95,7 +95,8 @@ def get_basename(path):
     return path.split(os.sep)[-1]
 
 
-def run_baseline(dataset_dir, code_dir, time_budget=7200):
+def run_baseline(dataset_dir, code_dir, prediction_dir, score_dir,
+                 time_budget=7200):
     # Current directory containing this script
     starting_kit_dir = os.path.dirname(os.path.realpath(__file__))
     path_ingestion = get_path_to_ingestion_program(starting_kit_dir)
@@ -106,8 +107,8 @@ def run_baseline(dataset_dir, code_dir, time_budget=7200):
         "python {} --dataset_dir={} --code_dir={} --time_budget={}"\
             .format(path_ingestion, dataset_dir, code_dir, time_budget)
     command_scoring = \
-        'python {} --solution_dir={}' \
-            .format(path_scoring, dataset_dir)
+        'python {} --solution_dir={} --prediction_dir={} --score_dir={}' \
+            .format(path_scoring, dataset_dir, prediction_dir, score_dir)
     def run_ingestion():
         os.system(command_ingestion)
     def run_scoring():
@@ -158,6 +159,8 @@ if __name__ == '__main__':
                            "argument if you want to test on a different "
                            "algorithm."
                            )
+    tf.flags.DEFINE_string('prediction_dir', '', "")
+    tf.flags.DEFINE_string('score_dir', '', "")
 
     tf.flags.DEFINE_float('time_budget', default_time_budget,
                           "Time budget for model train/predict")
@@ -165,10 +168,12 @@ if __name__ == '__main__':
     FLAGS = tf.flags.FLAGS
     dataset_dir = FLAGS.dataset_dir
     code_dir = FLAGS.code_dir
+    prediction_dir = FLAGS.prediction_dir
+    score_dir = FLAGS.score_dir
     time_budget = FLAGS.time_budget
     logging.info("#" * 50)
     logging.info("Begin running local test using")
     logging.info("code_dir = {}".format(get_basename(code_dir)))
     logging.info("dataset_dir = {}".format(get_basename(dataset_dir)))
     logging.info("#" * 50)
-    run_baseline(dataset_dir, code_dir, time_budget)
+    run_baseline(dataset_dir, code_dir, prediction_dir, score_dir, time_budget)

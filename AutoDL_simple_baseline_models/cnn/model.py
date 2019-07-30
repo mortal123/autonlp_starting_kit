@@ -1,6 +1,8 @@
-'''CNN model baseline.'''
+# -*- coding: utf-8 -*-
+
 import pandas as pd
 import os
+import re
 import argparse
 import time
 import jieba
@@ -28,19 +30,47 @@ from tensorflow.python.keras.preprocessing import text
 from tensorflow.python.keras.preprocessing import sequence
 
 
-def sequentialize_data(train_contents, val_contents=None, TOP_K=20000, MAX_SEQUENCE_LENGTH=200):
+MAX_SEQ_LENGTH = 200
+MAX_VOCAB_SIZE = 10000
+
+# code form https://towardsdatascience.com/multi-class-text-classification-with-lstm-1590bee1bd17
+def clean_en_text(dat):
+    
+    REPLACE_BY_SPACE_RE = re.compile('["/(){}\[\]\|@,;]')
+    BAD_SYMBOLS_RE = re.compile('[^0-9a-zA-Z #+_]')
+    
+    ret = []
+    for line in dat:
+        # text = text.lower() # lowercase text
+        line = REPLACE_BY_SPACE_RE.sub(' ', line)
+        line = BAD_SYMBOLS_RE.sub('', line)
+        line = line.strip()
+        ret.append(line)
+    return ret
+
+def clean_zh_text(dat):
+    REPLACE_BY_SPACE_RE = re.compile('[“”【】/（）：！～「」、|，；。"/(){}\[\]\|@,\.;]')
+    
+    ret = []
+    for line in dat:
+        line = REPLACE_BY_SPACE_RE.sub(' ', line)
+        line = line.strip()
+        ret.append(line)
+    return ret
+
+
+def sequentialize_data(train_contents, val_contents=None):
     """Vectorize data into ngram vectors.
 
     Args:
         train_contents:
         val_contents:
         y_train: labels of train data.
-        TOP_K: Limit on the number of features. We use the top 20K features.
 
     Returns:
         sparse ngram vectors of train, valid text inputs.
     """
-    tokenizer = text.Tokenizer(num_words=20000)
+    tokenizer = text.Tokenizer(num_words = MAX_VOCAB_SIZE)
     tokenizer.fit_on_texts(train_contents)
     x_train = tokenizer.texts_to_sequences(train_contents)
 
@@ -48,22 +78,19 @@ def sequentialize_data(train_contents, val_contents=None, TOP_K=20000, MAX_SEQUE
         x_val = tokenizer.texts_to_sequences(val_contents)
 
     max_length = len(max(x_train, key=len))
-    if max_length > MAX_SEQUENCE_LENGTH:
-        max_length = MAX_SEQUENCE_LENGTH
+    if max_length > MAX_SEQ_LENGTH:
+        max_length = MAX_SEQ_LENGTH
 
     x_train = sequence.pad_sequences(x_train, maxlen=max_length)
     if val_contents:
         x_val = sequence.pad_sequences(x_val, maxlen=max_length)
 
     word_index = tokenizer.word_index
-    num_features = min(len(word_index) + 1, TOP_K)
+    num_features = min(len(word_index) + 1, MAX_VOCAB_SIZE)
     if val_contents:
         return x_train, x_val, word_index, num_features, tokenizer, max_length
     else:
         return x_train, word_index, num_features, tokenizer, max_length
-
-
-
 
 
 def _get_last_layer_units_and_activation(num_classes):
@@ -90,7 +117,7 @@ def sep_cnn_model(input_shape,
                   blocks=1,
                   filters=64,
                   kernel_size=4,
-                  dropout_rate=0.5):
+                  dropout_rate=0.25):
     op_units, op_activation = _get_last_layer_units_and_activation(num_classes)
 
     model = models.Sequential()
@@ -131,41 +158,12 @@ def sep_cnn_model(input_shape,
     model.add(Dense(op_units, activation=op_activation))
     return model
 
-def _is_chinese_char(cp):
-    """Checks whether CP is the codepoint of a CJK character."""
-    if ((cp >= 0x4E00 and cp <= 0x9FFF) or  #
-            (cp >= 0x3400 and cp <= 0x4DBF) or  #
-            (cp >= 0x20000 and cp <= 0x2A6DF) or  #
-            (cp >= 0x2A700 and cp <= 0x2B73F) or  #
-            (cp >= 0x2B740 and cp <= 0x2B81F) or  #
-            (cp >= 0x2B820 and cp <= 0x2CEAF) or
-            (cp >= 0xF900 and cp <= 0xFAFF) or  #
-            (cp >= 0x2F800 and cp <= 0x2FA1F)):  #
-        return True
-
-    return False
-
-
-def _tokenize_chinese_chars(text):
-    """Adds whitespace around any CJK character."""
-    output = []
-    for char in text:
-        cp = ord(char)
-        if _is_chinese_char(cp):
-            output.append(" ")
-            output.append(char)
-            output.append(" ")
-        else:
-            output.append(char)
-    return "".join(output)
-
 
 def _tokenize_chinese_words(text):
     return ' '.join(jieba.cut(text, cut_all=False))
 
-
 def vectorize_data(x_train, x_val=None):
-    vectorizer = TfidfVectorizer(ngram_range=(1, 2))
+    vectorizer = TfidfVectorizer(ngram_range=(1, 1))
     if x_val:
         full_text = x_train + x_val
     else:
@@ -178,7 +176,8 @@ def vectorize_data(x_train, x_val=None):
     return train_vectorized, vectorizer
 
 
-def OHE_to(label):
+# onhot encode to category
+def ohe2cat(label):
     return np.argmax(label, axis=1)
 
 
@@ -205,13 +204,14 @@ class Model(object):
         :param remaining_time_budget:
         :return:
         """
-        if self.done_training:
-            return 
         x_train, y_train = train_dataset
 
         # tokenize Chinese words
         if self.metadata['language'] == 'ZH':
+            x_train = clean_zh_text(x_train)
             x_train = list(map(_tokenize_chinese_words, x_train))
+        else:
+            x_train = clean_en_text(x_train)
 
         x_train, word_index, num_features, tokenizer, max_length = sequentialize_data(x_train)
         num_classes = self.metadata['class_num']
@@ -223,18 +223,18 @@ class Model(object):
                               blocks=2,
                               filters=64,
                               kernel_size=4,
-                              dropout_rate=0.5)
+                              dropout_rate=0.25)
         if num_classes == 2:
             loss = 'binary_crossentropy'
         else:
             loss = 'sparse_categorical_crossentropy'
-        optimizer = tf.keras.optimizers.Adam(lr=1e-3)
+        optimizer = tf.keras.optimizers.Adam(lr=0.0005)
         model.compile(optimizer=optimizer, loss=loss, metrics=['acc'])
         callbacks = [tf.keras.callbacks.EarlyStopping(
             monitor='val_loss', patience=10)]
         history = model.fit(
             x_train,
-            OHE_to(y_train),
+            ohe2cat(y_train),
             epochs=1000,
             callbacks=callbacks,
             validation_split=0.2,
@@ -249,11 +249,10 @@ class Model(object):
             f.write(str(max_length).encode())
             f.close()
 
-        self.done_training=True
+        #         self.done_training=True
 
     def test(self, x_test, remaining_time_budget=None):
         """
-
         :param x_test: list of str, input test sentence.
         :param remaining_time_budget:
         :return: list of lists of int, sparse output model prediction labels.

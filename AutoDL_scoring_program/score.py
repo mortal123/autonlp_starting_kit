@@ -685,7 +685,6 @@ if __name__ == "__main__":
     basename = get_task_name(solution_dir)
 
     scoring_success = True
-    time_limit_exceeded = False
 
     try:
       # Begin scoring process, along with ingestion program
@@ -720,16 +719,9 @@ if __name__ == "__main__":
           logger.info("Current area under learning curve for {}: {:.4f}"\
                     .format(basename, score))
 
-      #  else: # When time budget is used up, kill ingestion
-      #  if is_process_alive(ingestion_pid):
-      #    time_limit_exceeded = True
-      #    terminate_process(ingestion_pid)
-      #    logger.info("Detected time budget is used up. Killed ingestion and " +
-      #                "terminating scoring...")
     except Exception as e:
       scoring_success = False
-      logger.error("[-] Error occurred in scoring:\n" + str(e),
-                    exc_info=True)
+      logger.error("[-] Error occurred in scoring:\n" + str(e), exc_info=True)
 
     score = update_score_and_learning_curve(prediction_dir,
                                             basename,
@@ -751,14 +743,8 @@ if __name__ == "__main__":
       logger.error("[-] Some error occurred in scoring program. " +
                    "Please see output/error log of Scoring Step.")
     elif not os.path.isfile(end_filepath):
-      if time_limit_exceeded:
-        logger.error("[-] Ingestion program exceeded time budget. " +
-                     "Predictions made so far will be used for evaluation.")
-      else: # Less probable to fall in this case
-        if is_process_alive(ingestion_pid):
-          terminate_process(ingestion_pid)
-        logger.error("[-] No 'end.txt' file is produced by ingestion. " +
-                     "Ingestion or scoring may have not terminated normally.")
+      logger.error("[-] No 'end.txt' file is produced by ingestion. " +
+                   "Ingestion or scoring may have not terminated normally.")
     else:
       with open(end_filepath, 'r') as f:
         end_info_dict = yaml.safe_load(f)

@@ -5,37 +5,6 @@ ALL INFORMATION, SOFTWARE, DOCUMENTATION, AND DATA ARE PROVIDED "AS-IS".
 UNIVERSITE PARIS SUD, INRIA, CHALEARN, AND/OR OTHER ORGANIZERS
 OR CODE AUTHORS DISCLAIM ANY EXPRESSED OR IMPLIED WARRANTIES.
 
-## Download this starting kit
-
-You can download this starting kit by clicking on the green button
-"Clone or download" on top of
-[this GitHub repo](https://github.com/zhengying-liu/autodl_starting_kit_stable),
-then "Download ZIP". You'll have this whole starting kit by unzipping the
-downloaded file.
-
-Another convenient way is to use **git clone**:
-```
-cd <path_to_your_directory>
-git clone https://github.com/zhengying-liu/autodl_starting_kit_stable.git
-```
-(If you are an experienced user of GitHub, feel free to
-[fork this repo](https://help.github.com/en/articles/fork-a-repo) and
-clone your own repo instead)
-
-Then you can begin participating to the AutoCV/AutoDL challenge by carefully
-reading this README.md file.
-
-## Update this starting kit
-
-As new features and possible bug fixes will be constantly added to this starting
-kit, you are invited to get latest updates **before each usage** by running
-```
-cd path/to/autodl_starting_kit_stable/
-git pull
-```
-(or by [syncing your fork](https://help.github.com/en/articles/syncing-a-fork)
-if you forked this repo)
-
 ## Local development and testing
 To make your own submission to AutoCV/AutoDL challenge, you need to modify the
 file `model.py` in `AutoDL_sample_code_submission/`, which implements the logic
@@ -48,7 +17,7 @@ see the [Dockerfile](https://github.com/zhengying-liu/autodl/blob/master/docker/
 If you are new to docker, install docker from https://docs.docker.com/get-started/.
 Then, at the shell, run:
 ```
-cd path/to/autodl_starting_kit_stable/
+cd path/to/autonlp_starting_kit_stable/
 docker run -it -v "$(pwd):/app/codalab" -p 8888:8888 evariste/autodl:cpu
 ```
 The tag `cpu` indicates that this image only supports usage of CPU (instead of

@@ -1,9 +1,12 @@
+# -*- coding: utf-8 -*-
+
 import pandas as pd
 import os
 import argparse
 import time
 import jieba
 import pickle
+import re
 import tensorflow as tf
 import numpy as np
 import sys, getopt
@@ -27,33 +30,33 @@ from tensorflow.python.keras.preprocessing import text
 from tensorflow.python.keras.preprocessing import sequence
 
 
-def _is_chinese_char(cp):
-    """Checks whether CP is the codepoint of a CJK character."""
-    if ((cp >= 0x4E00 and cp <= 0x9FFF) or  #
-            (cp >= 0x3400 and cp <= 0x4DBF) or  #
-            (cp >= 0x20000 and cp <= 0x2A6DF) or  #
-            (cp >= 0x2A700 and cp <= 0x2B73F) or  #
-            (cp >= 0x2B740 and cp <= 0x2B81F) or  #
-            (cp >= 0x2B820 and cp <= 0x2CEAF) or
-            (cp >= 0xF900 and cp <= 0xFAFF) or  #
-            (cp >= 0x2F800 and cp <= 0x2FA1F)):  #
-        return True
-
-    return False
+MAX_VOCAB_SIZE = 10000
 
 
-def _tokenize_chinese_chars(text):
-    """Adds whitespace around any CJK character."""
-    output = []
-    for char in text:
-        cp = ord(char)
-        if _is_chinese_char(cp):
-            output.append(" ")
-            output.append(char)
-            output.append(" ")
-        else:
-            output.append(char)
-    return "".join(output)
+# code form https://towardsdatascience.com/multi-class-text-classification-with-lstm-1590bee1bd17
+def clean_en_text(dat):
+    
+    REPLACE_BY_SPACE_RE = re.compile('["/(){}\[\]\|@,;]')
+    BAD_SYMBOLS_RE = re.compile('[^0-9a-zA-Z #+_]')
+    
+    ret = []
+    for line in dat:
+        # text = text.lower() # lowercase text
+        line = REPLACE_BY_SPACE_RE.sub(' ', line)
+        line = BAD_SYMBOLS_RE.sub('', line)
+        line = line.strip()
+        ret.append(line)
+    return ret
+
+def clean_zh_text(dat):
+    REPLACE_BY_SPACE_RE = re.compile('[“”【】/（）：！～「」、|，；。"/(){}\[\]\|@,\.;]')
+    
+    ret = []
+    for line in dat:
+        line = REPLACE_BY_SPACE_RE.sub(' ', line)
+        line = line.strip()
+        ret.append(line)
+    return ret
 
 
 def _tokenize_chinese_words(text):
@@ -61,7 +64,7 @@ def _tokenize_chinese_words(text):
 
 
 def vectorize_data(x_train, x_val=None):
-    vectorizer = TfidfVectorizer(ngram_range=(1, 1))
+    vectorizer = TfidfVectorizer(ngram_range=(1, 1), max_features = MAX_VOCAB_SIZE)
     if x_val:
         full_text = x_train + x_val
     else:
@@ -74,28 +77,27 @@ def vectorize_data(x_train, x_val=None):
     return train_vectorized, vectorizer
 
 
-def OHE_to(label):
+# onhot encode to category
+def ohe2cat(label):
     return np.argmax(label, axis=1)
 
 
 class Model(object):
     """Trivial example of valid model. Returns all-zero predictions."""
 
-    def __init__(self, metadata, train_output_path="./", test_input_path="./"):
+    def __init__(self, metadata):
         """
-
         :param metadata: a dict which contains these k-v pair: language, num_train_instances, num_test_instances, xxx.
         :param train_output_path: a str path contains training model's output files, including model.pickle and tokenizer.pickle.
         :param test_input_path: a str path contains test model's input files, including model.pickle and tokenizer.pickle.
         """
         self.done_training = False
         self.metadata = metadata
-        self.train_output_path = train_output_path
-        self.test_input_path = test_input_path
+        self.train_output_path = './'
+        self.test_input_path = './'
 
     def train(self, train_dataset, remaining_time_budget=None):
         """
-
         :param x_train: list of str, input training sentence.
         :param y_train: list of lists of int, sparse input training labels.
         :param remaining_time_budget:
@@ -103,17 +105,19 @@ class Model(object):
         """
         if self.done_training:
             return
-
         x_train, y_train = train_dataset
 
         # tokenize Chinese words
         if self.metadata['language'] == 'ZH':
+            x_train = clean_zh_text(x_train)
             x_train = list(map(_tokenize_chinese_words, x_train))
+        else:
+            x_train = clean_en_text(x_train)
 
         x_train, tokenizer = vectorize_data(x_train)
         model = LinearSVC(random_state=0, tol=1e-5)
         print(str(type(x_train)) + " " + str(y_train.shape))
-        model.fit(x_train, OHE_to(y_train))
+        model.fit(x_train, ohe2cat(y_train))
 
         with open(self.train_output_path + 'model.pickle', 'wb') as handle:
             pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -121,7 +125,8 @@ class Model(object):
         with open(self.train_output_path + 'tokenizer.pickle', 'wb') as handle:
             pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        self.done_training = True
+        self.done_training=True
+
 
     def test(self, x_test, remaining_time_budget=None):
         """
