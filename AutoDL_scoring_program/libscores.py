@@ -156,16 +156,13 @@ def tiedrank(a):
     if len(uval) != m:
         # Average the ranks for the ties
         oldval = sa[0]
-        newval = sa[0]
         k0 = 0
         for k in range(1, m):
-            newval = sa[k]
-            if newval == oldval:
-                # moving average
-                R[k0:k + 1] = R[k - 1] * (k - k0) / (k - k0 + 1) + R[k] / (k - k0 + 1)
-            else:
-                k0 = k;
-                oldval = newval
+            if sa[k] != oldval:
+                R[k0: k] = sum(R[k0: k]) / (k - k0)
+                k0 = k
+                oldval = sa[k]
+        R[k0: m] = sum(R[k0: m]) / (m - k0)
     # Invert the index
     S = np.empty(m)
     S[i] = R

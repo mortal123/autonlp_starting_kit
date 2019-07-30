@@ -8,6 +8,11 @@ import datetime
 
 DATA_HOME = "./all_datasets"
 
+def _HERE(*args):
+  """Helper function for getting the current directory of this script."""
+  h = os.path.dirname(os.path.realpath(__file__))
+  return os.path.abspath(os.path.join(h, *args))
+
 def run_baseline(args):
     dname, code_dir, exp_dir = args
     output_dir = path.join(exp_dir, dname)

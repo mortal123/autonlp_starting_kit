@@ -1,68 +1,3 @@
-################################################################################
-# Name:         Scoring Program
-# Author:       Zhengying Liu, Isabelle Guyon, Adrien Pavao, Zhen Xu
-# Update time:  5 May 2019
-# Usage: 		python score.py --solution_dir=<solution_dir> --prediction_dir=<prediction_dir> --score_dir=<score_dir>
-#           solution_dir contains  e.g. adult.solution
-#           prediction_dir should contain e.g. start.txt, adult.predict_0, adult.predict_1,..., end.txt.
-#           score_dir should contain scores.txt, detailed_results.html
-
-VERSION = 'v20190519'
-DESCRIPTION =\
-"""This is the scoring program for AutoDL challenge. It takes the predictions
-made by ingestion program as input and compare to the solution file and produce
-a learning curve.
-Previous updates:
-20190519: [ZY] Use the correct function for computing AUC of step functions
-20190516: [ZY] Change time budget to 20 minutes.
-20190508: [ZY] Decompose drawing learning curve functions;
-               Remove redirect output feature;
-               Use AUC instead of BAC;
-               Ignore columns with only one class when computing AUC;
-               Use step function instead of trapezoidal rule;
-               Change t0=300 from t0=1 in time transformation:
-                 log(1 + t/t0) / log(1 + T/t0)
-               Add second x-axis for the real time in seconds
-20190505: [ZY] Use argparse to parse directories AND time budget;
-               Fix num_preds not updated error.
-20190504: [ZY] Don't raise Exception anymore (for most cases) in order to
-               always have 'Finished' for each submission;
-               Kill ingestion when time limit is exceeded;
-               Use the last modified time of the file 'start.txt' written by
-               ingestion as the start time (`ingestion_start`);
-               Use module-specific logger instead of logging (with root logger);
-               Use the function update_score_and_learning_curve;
-20190429: [ZY] Remove useless code block such as the function is_started;
-               Better code layout.
-20190426.4: [ZY] Fix yaml format in scores.txt (add missing spaces)
-20190426.3: [ZY] Use f.write instead of yaml.dump to write scores.txt
-20190426.2: [ZY] Add logging info when writing scores and learning curves.
-20190426: [ZY] Now write to scores.txt whenever a new prediction is made. This
-               way, participants can still get a score when they exceed time
-               limit (but the submission's status will be marked as 'Failed').
-20190425: [ZY] Add ScoringError and IngestionError: throw error in these cases.
-               Participants will get 'Failed' for their error. But a score will
-               still by computed if applicable.
-               Improve importing order.
-               Log CPU usage.
-20190424: [ZY] Use logging instead of logger; remove start.txt checking.
-20190424: [ZY] Add version and description.
-20190419: [ZY] Judge if ingestion is alive by duration.txt; use logger."""
-
-# Scoring program for the AutoDL challenge
-# Isabelle Guyon and Zhengying Liu, ChaLearn, April 2018-
-
-# ALL INFORMATION, SOFTWARE, DOCUMENTATION, AND DATA ARE PROVIDED "AS-IS".
-# ISABELLE GUYON, CHALEARN, AND/OR OTHER ORGANIZERS OR CODE AUTHORS DISCLAIM
-# ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR ANY PARTICULAR PURPOSE, AND THE
-# WARRANTY OF NON-INFRINGEMENT OF ANY THIRD PARTY'S INTELLECTUAL PROPERTY RIGHTS.
-# IN NO EVENT SHALL ISABELLE GUYON AND/OR OTHER ORGANIZERS BE LIABLE FOR ANY SPECIAL,
-# INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER ARISING OUT OF OR IN
-# CONNECTION WITH THE USE OR PERFORMANCE OF SOFTWARE, DOCUMENTS, MATERIALS,
-# PUBLICATIONS, OR INFORMATION MADE AVAILABLE FOR THE CHALLENGE.
-################################################################################
-
 
 ################################################################################
 # User defined constants
@@ -644,7 +579,6 @@ if __name__ == "__main__":
     # Write initial score to `missing_score`
     write_score(score_dir, missing_score, duration=0)
 
-    logger.debug("Version: {}. Description: {}".format(VERSION, DESCRIPTION))
     logger.debug("Using solution_dir: " + str(solution_dir))
     logger.debug("Using prediction_dir: " + str(prediction_dir))
     logger.debug("Using score_dir: " + str(score_dir))

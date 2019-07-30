@@ -1,90 +1,3 @@
-################################################################################
-# Name:         Ingestion Program
-# Author:       Zhengying Liu, Isabelle Guyon, Adrien Pavao, Zhen Xu
-# Update time:  7 May 2019
-# Usage: python ingestion.py --dataset_dir=<dataset_dir> --output_dir=<prediction_dir> --ingestion_program_dir=<ingestion_program_dir> --code_dir=<code_dir> --score_dir=<score_dir>
-
-# AS A PARTICIPANT, DO NOT MODIFY THIS CODE.
-
-VERSION = 'v20190516'
-DESCRIPTION =\
-"""This is the "ingestion program" written by the organizers. It takes the
-code written by participants (with `model.py`) and one dataset as input,
-run the code on the dataset and produce predictions on test set. For more
-information on the code/directory structure, please see comments in this
-code (ingestion.py) and the README file of the starting kit.
-Previous updates:
-20190516: [ZY] Change time budget to 20 minutes.
-20190508: [ZY] Add time_budget to 'start.txt'
-20190507: [ZY] Write timestamps to 'start.txt'
-20190505: [ZY] Use argparse to parse directories AND time budget;
-               Rename input_dir to dataset_dir;
-               Rename submission_dir to code_dir;
-20190504: [ZY] Check if model.py has attribute done_training and use it to
-               determinate whether ingestion has ended;
-               Use module-specific logger instead of logging (with root logger);
-               At beginning, write start.txt with ingestion_pid and start_time;
-               In the end, write end.txt with end_time and ingestion_success;
-20190429: [ZY] Remove useless code block; better code layout.
-20190425: [ZY] Check prediction shape.
-20190424: [ZY] Use logging instead of logger; remove start.txt checking;
-20190419: [ZY] Try-except clause for training process;
-          always terminates successfully.
-"""
-# The dataset directory dataset_dir (e.g. AutoDL_sample_data/) contains one dataset
-# folder (e.g. adult.data/) with the training set (train/)  and test set (test/),
-# each containing an some tfrecords data with a `metadata.textproto` file of
-# metadata on the dataset. So one AutoDL dataset will look like
-#
-#   adult.data
-#   ├── test
-#   │   ├── metadata.textproto
-#   │   └── sample-adult-test.tfrecord
-#   └── train
-#       ├── metadata.textproto
-#       └── sample-adult-train.tfrecord
-#
-# The output directory output_dir (e.g. AutoDL_sample_result_submission/)
-# will first have a start.txt file written by ingestion then receive
-# all predictions made during the whole train/predict process
-# (thus this directory is updated when a new prediction is made):
-# 	adult.predict_0
-# 	adult.predict_1
-# 	adult.predict_2
-#        ...
-# after ingestion has finished, a file end.txt will be written, containing
-# info on the duration ingestion used. This file is also used as a signal
-# for scoring program showing that ingestion has terminated.
-#
-# The code directory submission_program_dir (e.g. AutoDL_sample_code_submission/)
-# should contain your code submission model.py (and possibly other functions
-# it depends upon).
-#
-# We implemented several classes:
-# 1) DATA LOADING:
-#    ------------
-# dataset.py
-# dataset.AutoDLMetadata: Read metadata in metadata.textproto
-# dataset.AutoDLDataset: Read data and give tf.data.Dataset
-# 2) LEARNING MACHINE:
-#    ----------------
-# model.py
-# model.Model.train
-# model.Model.test
-#
-# ALL INFORMATION, SOFTWARE, DOCUMENTATION, AND DATA ARE PROVIDED "AS-IS".
-# UNIVERSITE PARIS SUD, CHALEARN, AND/OR OTHER ORGANIZERS OR CODE AUTHORS DISCLAIM
-# ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR ANY PARTICULAR PURPOSE, AND THE
-# WARRANTY OF NON-INFRIGEMENT OF ANY THIRD PARTY'S INTELLECTUAL PROPERTY RIGHTS.
-# IN NO EVENT SHALL UNIVERSITE PARIS SUD AND/OR OTHER ORGANIZERS BE LIABLE FOR ANY SPECIAL,
-# INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER ARISING OUT OF OR IN
-# CONNECTION WITH THE USE OR PERFORMANCE OF SOFTWARE, DOCUMENTS, MATERIALS,
-# PUBLICATIONS, OR INFORMATION MADE AVAILABLE FOR THE CHALLENGE.
-#
-# Main contributors: Isabelle Guyon and Zhengying Liu
-
-# =========================== BEGIN OPTIONS ==============================
 
 # Verbosity level of logging:
 ##############
@@ -134,7 +47,7 @@ logger = get_logger(verbosity_level)
 def mprint(msg):
   """info"""
   cur_time = datetime.now().strftime('%m-%d %H:%M:%S')
-  print("INFO  [{}] {}".format(cur_time, msg))
+  logger.info("[{}] {}".format(cur_time, msg))
 
 
 class TimeoutException(Exception):
@@ -169,10 +82,11 @@ class Timer:
       self.duration += exec_time
       self.remain = self.total - self.exec
 
+      mprint('{} success, time spent so far {} sec'.format(pname, self.exec))
+
       if self.remain <= 0:
         raise TimeoutException("Timed out!")
 
-      mprint('{} success, time spent so far {} sec'.format(pname, self.exec))
 
 def _HERE(*args):
   """Helper function for getting the current directory of this script."""
@@ -224,8 +138,7 @@ class BadPredictionShapeError(Exception):
 if __name__=="__main__":
     # Mark starting time of ingestion
     start = time.time()
-    logger.info("="*5 + " Start ingestion program. " +
-                "Version: {} ".format(VERSION) + "="*5)
+    logger.info("="*5 + " Start ingestion program. ")
 
     #### Check whether everything went well
     ingestion_success = True
@@ -292,7 +205,7 @@ if __name__=="__main__":
     logger.debug("Using ingestion_program_dir: " + ingestion_program_dir)
     logger.debug("Using code_dir: " + code_dir)
 
-	  # Our libraries
+    # Our libraries
     path.append(ingestion_program_dir)
     path.append(code_dir)
     #IG: to allow submitting the starting kit as sample submission
@@ -323,9 +236,8 @@ if __name__=="__main__":
 
     logger.info("************************************************")
     logger.info("******** Processing dataset " + basename[:-5].capitalize() +
-                 " ********")
+                " ********")
     logger.info("************************************************")
-    logger.debug("Version: {}. Description: {}".format(VERSION, DESCRIPTION))
 
     ##### Begin creating training set and test set #####
     logger.info("Reading training set and test set...")
