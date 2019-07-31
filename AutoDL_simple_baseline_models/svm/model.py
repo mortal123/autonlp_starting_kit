@@ -35,10 +35,10 @@ MAX_VOCAB_SIZE = 10000
 
 # code form https://towardsdatascience.com/multi-class-text-classification-with-lstm-1590bee1bd17
 def clean_en_text(dat):
-    
+
     REPLACE_BY_SPACE_RE = re.compile('["/(){}\[\]\|@,;]')
     BAD_SYMBOLS_RE = re.compile('[^0-9a-zA-Z #+_]')
-    
+
     ret = []
     for line in dat:
         # text = text.lower() # lowercase text
@@ -50,7 +50,7 @@ def clean_en_text(dat):
 
 def clean_zh_text(dat):
     REPLACE_BY_SPACE_RE = re.compile('[“”【】/（）：！～「」、|，；。"/(){}\[\]\|@,\.;]')
-    
+
     ret = []
     for line in dat:
         line = REPLACE_BY_SPACE_RE.sub(' ', line)
@@ -83,13 +83,16 @@ def ohe2cat(label):
 
 
 class Model(object):
-    """Trivial example of valid model. Returns all-zero predictions."""
+    """ Example of valid model """
 
     def __init__(self, metadata):
-        """
-        :param metadata: a dict which contains these k-v pair: language, num_train_instances, num_test_instances, xxx.
-        :param train_output_path: a str path contains training model's output files, including model.pickle and tokenizer.pickle.
-        :param test_input_path: a str path contains test model's input files, including model.pickle and tokenizer.pickle.
+        """ Initialization for model
+        :param metadata: a dict formed like:
+            {"class_num": 10,
+             "language": ZH,
+             "num_train_instances": 10000,
+             "num_test_instances": 1000,
+             "time_budget": 300}
         """
         self.done_training = False
         self.metadata = metadata
@@ -97,11 +100,33 @@ class Model(object):
         self.test_input_path = './'
 
     def train(self, train_dataset, remaining_time_budget=None):
-        """
-        :param x_train: list of str, input training sentence.
-        :param y_train: list of lists of int, sparse input training labels.
+        """Train this algorithm on the NLP task.
+
+         This method will be called REPEATEDLY during the whole training/predicting
+         process. So your `train` method should be able to handle repeated calls and
+         hopefully improve your model performance after each call.
+
+         ****************************************************************************
+         ****************************************************************************
+         IMPORTANT: the loop of calling `train` and `test` will only run if
+             self.done_training = False
+           (the corresponding code can be found in ingestion.py, search
+           'M.done_training')
+           Otherwise, the loop will go on until the time budget is used up. Please
+           pay attention to set self.done_training = True when you think the model is
+           converged or when there is not enough time for next round of training.
+         ****************************************************************************
+         ****************************************************************************
+
+        :param train_dataset: tuple, (x_train, y_train)
+            x_train: list of str, input training sentence.
+            y_train: A `numpy.ndarray` matrix of shape (sample_count, class_num).
+                     here `sample_count` is the number of examples in this dataset as train
+                     set and `class_num` is the same as the class_num in metadata. The
+                     values should be binary.
         :param remaining_time_budget:
-        :return:
+
+        :return: None
         """
         if self.done_training:
             return
@@ -132,7 +157,10 @@ class Model(object):
         """
         :param x_test: list of str, input test sentence.
         :param remaining_time_budget:
-        :return: list of lists of int, sparse output model prediction labels.
+        :return: A `numpy.ndarray` matrix of shape (sample_count, class_num).
+                 here `sample_count` is the number of examples in this dataset as test
+                 set and `class_num` is the same as the class_num in metadata. The
+                 values should be binary or in the interval [0,1].
         """
         with open(self.test_input_path + 'model.pickle', 'rb') as handle:
             model = pickle.load(handle, encoding='iso-8859-1')
@@ -154,16 +182,3 @@ class Model(object):
         for idx, y in enumerate(result):
             y_test[idx][y] = 1
         return y_test
-
-
-if __name__ == '__main__':
-    path = '/Users/a/Documents/autonlp_datasets/thucnews_public/'
-    df = pd.read_csv(path + 'cnews.dev.txt', sep='\t',
-                     names=['labels', 'contents'])
-    x_train = list(df['contents'].values)
-    le = LabelEncoder()
-    le.fit(df['labels'])
-    y_train = le.transform(df['labels'])
-    model = Model_SVM('a', '/Users/a/Documents/baseline_autonlp_test/', '/Users/a/Documents/baseline_autonlp_test/')
-    model.train(x_train, y_train)
-    res = model.test(x_train)

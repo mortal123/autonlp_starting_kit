@@ -92,14 +92,6 @@ def autodl_auc(solution, prediction, valid_columns_only=True):
     auc[k] = (sum(r_[s_ == 1]) - npos * (npos + 1) / 2) / (nneg * npos)
   return 2 * mvmean(auc) - 1
 
-def accuracy(solution, prediction):
-  """Get accuracy of 'prediction' w.r.t true labels 'solution'."""
-  epsilon = 1e-15
-  # normalize prediction
-  prediction_normalized =\
-    prediction / (np.sum(np.abs(prediction), axis=1, keepdims=True) + epsilon)
-  return np.sum(solution * prediction_normalized) / solution.shape[0]
-
 def get_valid_columns(solution):
   """Get a list of column indices for which the column has more than one class.
   This is necessary when computing BAC or AUC which involves true positive and
@@ -626,7 +618,8 @@ if __name__ == "__main__":
       prediction_files_so_far = []
       scores_so_far = []
       num_preds = 0
-      while (ingestion_is_alive(prediction_dir)):
+      while (ingestion_is_alive(prediction_dir) and
+             is_process_alive(ingestion_pid)):
         time.sleep(1)
         # Get list of prediction files
         prediction_files = get_prediction_files(prediction_dir)

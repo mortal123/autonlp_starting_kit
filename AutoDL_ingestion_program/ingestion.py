@@ -176,7 +176,8 @@ if __name__=="__main__":
                              "e.g. `scores.txt` and `detailed_results.html`.")
     parser.add_argument("--time_budget", type=float,
                         default=default_time_budget,
-                        help="Time budget for running ingestion program.")
+                        help="Time budget for running model if not specified "
+                             "in meta.json.")
     args = parser.parse_args()
     logger.debug("Parsed args are: " + str(args))
     logger.debug("-" * 50)

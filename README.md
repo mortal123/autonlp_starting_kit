@@ -1,36 +1,36 @@
-AutoCV/AutoDL starting kit
+AutoNLP/AutoDL starting kit
 ======================================
 
-ALL INFORMATION, SOFTWARE, DOCUMENTATION, AND DATA ARE PROVIDED "AS-IS".
-UNIVERSITE PARIS SUD, INRIA, CHALEARN, AND/OR OTHER ORGANIZERS
-OR CODE AUTHORS DISCLAIM ANY EXPRESSED OR IMPLIED WARRANTIES.
+THE ORIGINAL VERSION IS FROM https://github.com/zhengying-liu/autodl_starting_kit_stable,
+MODIFIED BY WENHAO LI
 
 ## Local development and testing
-To make your own submission to AutoCV/AutoDL challenge, you need to modify the
+To make your own submission to AutoNLP/AutoDL challenge, you need to modify the
 file `model.py` in `AutoDL_sample_code_submission/`, which implements the logic
 of your algorithm. You can then test it on your local computer using Docker,
 in the exact same environment as on the CodaLab challenge platform. Advanced
 users can also run local test without Docker, if they install all the required
 packages,
+----------------------- TODO: ADD Dockerfile and embedding info
 see the [Dockerfile](https://github.com/zhengying-liu/autodl/blob/master/docker/Dockerfile).
 
 If you are new to docker, install docker from https://docs.docker.com/get-started/.
 Then, at the shell, run:
+----------------------- TODO: RENAME git repository name, docker issue
 ```
 cd path/to/autonlp_starting_kit_stable/
 docker run -it -v "$(pwd):/app/codalab" -p 8888:8888 evariste/autodl:cpu
 ```
-The tag `cpu` indicates that this image only supports usage of CPU (instead of
-GPU). The option `-v "$(pwd):/app/codalab"` mounts current directory
+The option `-v "$(pwd):/app/codalab"` mounts current directory
 (`autodl_starting_kit_stable/`) as `/app/codalab`. If you want to mount other
 directories on your disk, please replace `$(pwd)` by your own directory.
-The option `-p 8888:8888` is useful for running a Jupyter notebook tutorial
-inside Docker.
 
 The backend on CodaLab runs a slightly different Docker image
+----------------------- TODO: modify docker name
 ```
 evariste/autodl:gpu
 ```
+----------------------- TODO: check each package's version
 who has Nvidia GPU supports. Both Docker images have installed packages such as
 `tensorflow-gpu=1.13.1` (or `tensorflow=1.13.1` for `cpu`), `torch=1.1.0`,
 `keras=2.2.4`, CUDA 10, cuDNN 7.5, etc. If you want to
@@ -41,12 +41,11 @@ instead
 nvidia-docker run -it -v "$(pwd):/app/codalab" -p 8888:8888 evariste/autodl:gpu
 ```
 
-Make sure you use enough RAM (**at least 4GB**). If the port 8888 is occupied,
-you can use other ports, e.g. 8899, and use instead the option `-p 8899:8888`.
+Make sure you use enough RAM (**at least 4GB**).
 
 You will then be able to run the `ingestion program` (to produce predictions)
 and the `scoring program` (to evaluate your predictions) on toy sample data.
-In the AutoCV/AutoDL challenge, these two programs will run in parallel to give
+In the AutoNLP/AutoDL challenge, these two programs will run in parallel to give
 real-time feedback (with learning curves). So we provide a Python script to
 simulate this behavior:
 ```
@@ -57,11 +56,11 @@ HTML page in `AutoDL_scoring_output/`.
 
 The full usage is
 ```
-python run_local_test.py -dataset_dir='AutoDL_sample_data/miniciao' -code_dir='AutoDL_simple_baseline_models/linear'
+python run_local_test.py -dataset_dir='AutoDL_sample_data/hotel' -code_dir='AutoDL_simple_baseline_models/svm'
 ```
 or
 ```
-python run_local_test.py -dataset_dir='AutoDL_public_data/Munster' -code_dir='AutoDL_sample_code_submission'
+python run_local_test.py -dataset_dir='AutoDL_public_data/hotel' -code_dir='AutoDL_sample_code_submission'
 ```
 You can change the argument `dataset_dir` to other datasets (e.g. the five
 public datasets we provide). On the other hand,

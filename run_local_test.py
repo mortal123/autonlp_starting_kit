@@ -8,12 +8,12 @@
 
 VERISION = "v20190505"
 DESCRIPTION = \
-    """This script allows participants to run local test of their method 
+    """This script allows participants to run local test of their method
     within the
 downloaded starting kit folder (and avoid using submission quota on CodaLab). To
 do this, run:
 ```
-python run_local_test.py -dataset_dir=./AutoDL_sample_data/miniciao 
+python run_local_test.py -dataset_dir=./AutoDL_sample_data/miniciao
 -code_dir=./AutoDL_sample_code_submission/
 ```
 in the starting kit directory. If you want to test the performance of a
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     default_starting_kit_dir = _HERE()
     # The default dataset is 'miniciao' under the folder AutoDL_sample_data/
     default_dataset_dir = os.path.join(default_starting_kit_dir,
-                                       'AutoDL_sample_data', 'miniciao')
+                                       'AutoDL_sample_data', 'hotel')
     default_code_dir = os.path.join(default_starting_kit_dir,
                                     'AutoDL_sample_code_submission')
     default_time_budget = 1200
@@ -160,7 +160,8 @@ if __name__ == '__main__':
                            )
 
     tf.flags.DEFINE_float('time_budget', default_time_budget,
-                          "Time budget for model train/predict")
+                          "Time budget for model train/predict if not "
+                          "specified in meta.json")
 
     FLAGS = tf.flags.FLAGS
     dataset_dir = FLAGS.dataset_dir

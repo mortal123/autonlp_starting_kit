@@ -35,10 +35,10 @@ MAX_VOCAB_SIZE = 10000
 
 # code form https://towardsdatascience.com/multi-class-text-classification-with-lstm-1590bee1bd17
 def clean_en_text(dat):
-    
+
     REPLACE_BY_SPACE_RE = re.compile('["/(){}\[\]\|@,;]')
     BAD_SYMBOLS_RE = re.compile('[^0-9a-zA-Z #+_]')
-    
+
     ret = []
     for line in dat:
         # text = text.lower() # lowercase text
@@ -50,7 +50,7 @@ def clean_en_text(dat):
 
 def clean_zh_text(dat):
     REPLACE_BY_SPACE_RE = re.compile('[“”【】/（）：！～「」、|，；。"/(){}\[\]\|@,\.;]')
-    
+
     ret = []
     for line in dat:
         line = REPLACE_BY_SPACE_RE.sub(' ', line)
@@ -182,28 +182,13 @@ def ohe2cat(label):
 
 
 class Model(object):
-    """Trivial example of valid model. Returns all-zero predictions."""
-
     def __init__(self, metadata, train_output_path="./", test_input_path="./"):
-        """
-
-        :param metadata: a dict which contains these k-v pair: language, num_train_instances, num_test_instances, xxx.
-        :param train_output_path: a str path contains training model's output files, including model.pickle and tokenizer.pickle.
-        :param test_input_path: a str path contains test model's input files, including model.pickle and tokenizer.pickle.
-        """
         self.done_training = False
         self.metadata = metadata
         self.train_output_path = train_output_path
         self.test_input_path = test_input_path
 
     def train(self, train_dataset, remaining_time_budget=None):
-        """
-
-        :param x_train: list of str, input training sentence.
-        :param y_train: list of lists of int, sparse input training labels.
-        :param remaining_time_budget:
-        :return:
-        """
         x_train, y_train = train_dataset
 
         # tokenize Chinese words
@@ -249,14 +234,9 @@ class Model(object):
             f.write(str(max_length).encode())
             f.close()
 
-        #         self.done_training=True
+        self.done_training=True
 
     def test(self, x_test, remaining_time_budget=None):
-        """
-        :param x_test: list of str, input test sentence.
-        :param remaining_time_budget:
-        :return: list of lists of int, sparse output model prediction labels.
-        """
         model = models.load_model(self.test_input_path + 'model.h5')
         with open(self.test_input_path + 'tokenizer.pickle', 'rb') as handle:
             tokenizer = pickle.load(handle, encoding='iso-8859-1')
@@ -280,5 +260,3 @@ class Model(object):
         for idx, y in enumerate(result):
             y_test[idx][y] = 1
         return y_test
-
-
