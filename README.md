@@ -4,6 +4,17 @@ AutoNLP/AutoDL starting kit
 THE ORIGINAL VERSION IS FROM https://github.com/zhengying-liu/autodl_starting_kit_stable,
 MODIFIED BY WENHAO LI
 
+## Contents
+AutoDL_ingestion_program/: The code and libraries used on Codalab to run your submmission. 
+
+AutoDL_scoring_program/: The code and libraries used on Codalab to score your submmission. 
+
+AutoDL_sample_code_submission/: An example of code submission you can use as template. 
+
+AutoDL_sample_data/: Some sample data to test your code before you submit it. 
+
+run_local_test.py: A python script to simulate the runtime in codalab
+
 ## Local development and testing
 To make your own submission to AutoNLP/AutoDL challenge, you need to modify the
 file `model.py` in `AutoDL_sample_code_submission/`, which implements the logic
@@ -28,7 +39,7 @@ wahaha909/autodl:gpu
 ```
 has Nvidia GPU supports. see the 
 [site](https://cloud.docker.com/repository/docker/wahaha909/autonlp/general)
-to check installed packages in our docker.
+to check installed packages in the docker image.
 
 Make sure you use enough RAM (**at least 4GB**).
 
@@ -45,14 +56,10 @@ HTML page in `AutoDL_scoring_output/`.
 
 The full usage is
 ```
-python run_local_test.py -dataset_dir='AutoDL_sample_data/hotel' -code_dir='AutoDL_simple_baseline_models/svm'
-```
-or
-```
-python run_local_test.py -dataset_dir='AutoDL_public_data/hotel' -code_dir='AutoDL_sample_code_submission'
+python run_local_test.py -dataset_dir='AutoDL_sample_data/DEMO' -code_dir='AutoDL_sample_code_submission'
 ```
 You can change the argument `dataset_dir` to other datasets (e.g. the five
-public datasets we provide). On the other hand,
+offline datasets we provide). On the other hand,
 you can also modify the directory containing your other sample code
 (`model.py`).
 
@@ -61,7 +68,9 @@ We provide 5 offline datasets for participants. They can use these datasets to:
 1. Do local test for their own algorithm;
 2. Enable meta-learning.
 
-You may refer to [codalab site](https://pan.baidu.com/s/1xZliZPg3Ylw1sjMLlIkICA) for download the datasets.
+You may refer to [codalab site](https://autodl.lri.fr/competitions/35#learn_the_details-get_data) for offline datasets.
+
+Unzip the zip file and you'll get 5 datasets.
 
 ## Prepare a ZIP file for submission on CodaLab
 Zip the contents of `AutoDL_sample_code_submission`(or any folder containing
