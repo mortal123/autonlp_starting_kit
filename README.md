@@ -56,7 +56,7 @@ HTML page in `AutoDL_scoring_output/`.
 
 The full usage is
 ```
-python run_local_test.py -dataset_dir='AutoDL_sample_data/DEMO' -code_dir='AutoDL_sample_code_submission'
+python run_local_test.py -dataset_dir=./AutoDL_sample_data/DEMO -code_dir=./AutoDL_sample_code_submission
 ```
 You can change the argument `dataset_dir` to other datasets (e.g. the five
 practice datasets we provide). On the other hand,
