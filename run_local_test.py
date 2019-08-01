@@ -140,7 +140,7 @@ if __name__ == '__main__':
     default_starting_kit_dir = _HERE()
     # The default dataset is 'miniciao' under the folder AutoDL_sample_data/
     default_dataset_dir = os.path.join(default_starting_kit_dir,
-                                       'AutoDL_sample_data', 'hotel')
+                                       'AutoDL_sample_data', 'DEMO')
     default_code_dir = os.path.join(default_starting_kit_dir,
                                     'AutoDL_sample_code_submission')
     default_time_budget = 1200
