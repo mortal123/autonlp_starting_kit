@@ -26,7 +26,6 @@ The Docker image
 ```
 wahaha909/autodl:gpu
 ```
------------------------ TODO: check each package's version
 has Nvidia GPU supports. see the 
 [site](https://cloud.docker.com/repository/docker/wahaha909/autonlp/general)
 to check installed packages in our docker.
@@ -57,7 +56,6 @@ public datasets we provide). On the other hand,
 you can also modify the directory containing your other sample code
 (`model.py`).
 
--------------------------- TODO:
 ## Download offline datasets
 We provide 5 offline datasets for participants. They can use these datasets to:
 1. Do local test for their own algorithm;
