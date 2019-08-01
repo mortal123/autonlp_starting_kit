@@ -63,23 +63,7 @@ We provide 5 offline datasets for participants. They can use these datasets to:
 1. Do local test for their own algorithm;
 2. Enable meta-learning.
 
-You may refer to [codalab site](https://autodl.lri.fr/competitions/35#learn_the_details-get_data) for details
-
-## Understand how a submission is evaluated
-
-You may have following questions:
-- How is a submission handled and evaluated on CodaLab? How is it implemented?
-- What are ingestion program and scoring program? What do they do?
-
-To answer these questions, you
-can find a flow chart (`evaluation-flow-chart.png`) in the repo:
-
-![Evaluation Flow Chart](evaluation-flow-chart.png "Evaluation process of the challenge")
-
-If you still want more details, you can refer to the source code at
-- Ingestion Program: `AutoDL_ingestion_program/ingestion.py`
-- Scoring Program: `AutoDL_scoring_program/score.py`
-
+You may refer to [codalab site](https://pan.baidu.com/s/1xZliZPg3Ylw1sjMLlIkICA) for download the datasets.
 
 ## Prepare a ZIP file for submission on CodaLab
 Zip the contents of `AutoDL_sample_code_submission`(or any folder containing
