@@ -59,16 +59,16 @@ The full usage is
 python run_local_test.py -dataset_dir='AutoDL_sample_data/DEMO' -code_dir='AutoDL_sample_code_submission'
 ```
 You can change the argument `dataset_dir` to other datasets (e.g. the five
-offline datasets we provide). On the other hand,
+practice datasets we provide). On the other hand,
 you can also modify the directory containing your other sample code
 (`model.py`).
 
-## Download offline datasets
-We provide 5 offline datasets for participants. They can use these datasets to:
+## Download practice datasets
+We provide 5 practice datasets for participants. They can use these datasets to:
 1. Do local test for their own algorithm;
 2. Enable meta-learning.
 
-You may refer to [codalab site](https://autodl.lri.fr/competitions/35#learn_the_details-get_data) for offline datasets.
+You may refer to [codalab site](https://autodl.lri.fr/competitions/35#learn_the_details-get_data) for practice datasets.
 
 Unzip the zip file and you'll get 5 datasets.
 
@@ -98,4 +98,4 @@ button.
 
 ## Contact us
 If you have any questions, please contact us via:
-<autodl@chalearn.org>
+<autonlp2019@4paradigm.com>
