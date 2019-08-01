@@ -11,35 +11,25 @@ of your algorithm. You can then test it on your local computer using Docker,
 in the exact same environment as on the CodaLab challenge platform. Advanced
 users can also run local test without Docker, if they install all the required
 packages,
------------------------ TODO: ADD Dockerfile and embedding info
-see the [Dockerfile](https://github.com/zhengying-liu/autodl/blob/master/docker/Dockerfile).
 
 If you are new to docker, install docker from https://docs.docker.com/get-started/.
 Then, at the shell, run:
------------------------ TODO: RENAME git repository name, docker issue
 ```
-cd path/to/autonlp_starting_kit_stable/
-docker run -it -v "$(pwd):/app/codalab" -p 8888:8888 evariste/autodl:cpu
+cd path/to/autonlp_starting_kit/
+docker run -it -v "$(pwd):/app/codalab" wahaha909/autonlp:gpu
 ```
 The option `-v "$(pwd):/app/codalab"` mounts current directory
 (`autodl_starting_kit_stable/`) as `/app/codalab`. If you want to mount other
 directories on your disk, please replace `$(pwd)` by your own directory.
 
-The backend on CodaLab runs a slightly different Docker image
------------------------ TODO: modify docker name
+The Docker image
 ```
-evariste/autodl:gpu
+wahaha909/autodl:gpu
 ```
 ----------------------- TODO: check each package's version
-who has Nvidia GPU supports. Both Docker images have installed packages such as
-`tensorflow-gpu=1.13.1` (or `tensorflow=1.13.1` for `cpu`), `torch=1.1.0`,
-`keras=2.2.4`, CUDA 10, cuDNN 7.5, etc. If you want to
-run local test with Nvidia GPU support, please make sure you have
-[installed nvidia-docker](https://github.com/NVIDIA/nvidia-docker) and run
-instead
-```
-nvidia-docker run -it -v "$(pwd):/app/codalab" -p 8888:8888 evariste/autodl:gpu
-```
+has Nvidia GPU supports. see the 
+[site](https://cloud.docker.com/repository/docker/wahaha909/autonlp/general)
+to check installed packages in our docker.
 
 Make sure you use enough RAM (**at least 4GB**).
 
@@ -67,46 +57,13 @@ public datasets we provide). On the other hand,
 you can also modify the directory containing your other sample code
 (`model.py`).
 
-## Run the tutorial
-We provide a tutorial in the form of a Jupyter notebook. When you are in your
-docker container, enter:
-```
-jupyter-notebook --ip=0.0.0.0 --allow-root &
-```
-Then copy and paste the URL containing your token. It should look like something
-like that:
-```
-http://0.0.0.0:8888/?token=82e416e792c8f6a9f2194d2f4dbbd3660ad4ca29a4c58fe7
-```
-and select `tutorial.ipynb` in the menu.
+-------------------------- TODO:
+## Download offline datasets
+We provide 5 offline datasets for participants. They can use these datasets to:
+1. Do local test for their own algorithm;
+2. Enable meta-learning.
 
-## Download public datasets
-We provide 5 public datasets for participants. They can use these datasets to:
-1. Explore data (e.g. using `data_browser.py`, see next section);
-2. Do local test for their own algorithm;
-3. Enable meta-learning.
-We also provide a script to facilitate the data downloading process. The usage
-is:
-```bash
-python download_public_datasets.py
-```
-Note that this can take a few minutes, depending on your connection.
-
-## Visualize datasets
-*WARNING: to be run outside of a Docker container.*
-
-We provide a script for visualizing random examples of a given dataset:
-```bash
-python data_browser.py -dataset_dir=AutoDL_sample_data/miniciao
-```
-You can change the dataset name `miniciao` to that of any other dataset
-(e.g. `Munster`, `Chucky`, `Pedro`, etc.).
-
-As all datasets are formatted into
-[TFRecords](https://www.tensorflow.org/tutorials/load_data/tf_records),
-this script actually provides a way to easily see what their
-code receives as examples (and labels), especially for the participants who
-are not familiar with this format.
+You may refer to [codalab site](https://autodl.lri.fr/competitions/35#learn_the_details-get_data) for details
 
 ## Understand how a submission is evaluated
 
@@ -144,7 +101,7 @@ unzip -l mysubmission.zip
 
 If you run into bugs or issues when using this starting kit, please create
 issues on the
-[*Issues* page](https://github.com/zhengying-liu/autodl_starting_kit_stable/issues)
+[*Issues* page](https://github.com/mortal123/autonlp_starting_kit/issues)
 of this repo. Two templates will be given when you click the **New issue**
 button.
 
