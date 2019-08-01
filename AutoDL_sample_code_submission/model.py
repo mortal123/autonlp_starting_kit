@@ -141,7 +141,6 @@ class Model(object):
 
         x_train, tokenizer = vectorize_data(x_train)
         model = LinearSVC(random_state=0, tol=1e-5)
-        print(str(type(x_train)) + " " + str(y_train.shape))
         model.fit(x_train, ohe2cat(y_train))
 
         with open(self.train_output_path + 'model.pickle', 'wb') as handle:

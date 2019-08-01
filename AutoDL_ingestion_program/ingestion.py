@@ -101,12 +101,10 @@ def write_start_file(output_dir, start_time=None, time_budget=None,
   The content of this file will be similar to:
       ingestion_pid: 1
       task_name: beatriz
-      time_budget: 7200
+      time_budget: 2400.0
       start_time: 1557923830.3012087
-      0: 1557923854.504741
-      1: 1557923860.091236
-      2: 1557923865.9630117
-      3: 1557923872.3627956
+      0: 7.116559
+      1: 14.112311
       <more timestamps of predictions>
   """
   ingestion_pid = os.getpid()
