@@ -1,4 +1,3 @@
-
 # Verbosity level of logging:
 ##############
 # Can be: NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -261,7 +260,7 @@ if __name__=="__main__":
         M = Model(metadata)
       ###### End creating model ######
     except TimeoutException as e:
-      logger.info("[-] Initialization phase exceeded time budget. Stopped to run train/predict")
+      logger.info("[-] Initialization phase exceeded time budget. Move to train/predict phase")
     except Exception as e:
       logger.info("Failed to initializing model.")
       logger.error("Encountered exception:\n" + str(e), exc_info=True)
