@@ -5,13 +5,13 @@ THE ORIGINAL VERSION IS FROM https://github.com/zhengying-liu/autodl_starting_ki
 MODIFIED BY WENHAO LI
 
 ## Contents
-AutoDL_ingestion_program/: The code and libraries used on Codalab to run your submmission. 
+AutoDL_ingestion_program/: The code and libraries used on Codalab to run your submmission.
 
-AutoDL_scoring_program/: The code and libraries used on Codalab to score your submmission. 
+AutoDL_scoring_program/: The code and libraries used on Codalab to score your submmission.
 
-AutoDL_sample_code_submission/: An example of code submission you can use as template. 
+AutoDL_sample_code_submission/: An example of code submission you can use as template.
 
-AutoDL_sample_data/: Some sample data to test your code before you submit it. 
+AutoDL_sample_data/: Some sample data to test your code before you submit it.
 
 run_local_test.py: A python script to simulate the runtime in codalab
 
@@ -30,15 +30,15 @@ cd path/to/autonlp_starting_kit/
 docker run -it -v "$(pwd):/app/codalab" wahaha909/autonlp:gpu
 ```
 The option `-v "$(pwd):/app/codalab"` mounts current directory
-(`autodl_starting_kit_stable/`) as `/app/codalab`. If you want to mount other
+(`autonlp_starting_kit/`) as `/app/codalab`. If you want to mount other
 directories on your disk, please replace `$(pwd)` by your own directory.
 
 The Docker image
 ```
-wahaha909/autodl:gpu
+wahaha909/autonlp:gpu
 ```
-has Nvidia GPU supports. see the 
-[site](https://cloud.docker.com/repository/docker/wahaha909/autonlp/general)
+has Nvidia GPU supports. see the
+[site](https://hub.docker.com/r/wahaha909/autonlp)
 to check installed packages in the docker image.
 
 Make sure you use enough RAM (**at least 4GB**).
